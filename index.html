@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { background: #ddd; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #gameCanvas { background: #fff; }
+        #gameTitle { position: absolute; top: 20px; left: 50px; font-size: 2em; }
+        #gameWorld { position: relative; }
+    </style>
+</head>
+<body>
+    <div id="gameWorld">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
+    <script>
+        var canvas = document.getElementById('gameCanvas');
+        var ctx = canvas.getContext('2d');
+        var playerImage = new Image();
+        playerImage.src = 'NightBorne.png';
+        var frameWidth = 1840/23;
+        var frameHeight = 400/5;
+        var currentFrame = 0; // Start with the first frame
+        var frameY = 0; //animation to choose (default:idle)
+        var player = {
+            x: 50,
+            y: canvas.height - 100,
+            width: 50,
+            height: 50,
+            color: '#c00',
+            direction: null,
+            speed: 4,
+            vy: 0,  // Vertical speed
+            gravity: 0.5,  // Gravity
+            jumpCount: 0,  // Number of jumps
+            maxJumps: 2  // Maximum number of jumps
+        };
+
+        var platforms = [
+            { x: 100, y: 500, width: 200, height: 20 },
+            { x: 350, y: 400, width: 200, height: 20 },
+            { x: 600, y: 300, width: 200, height: 20 }
+        ];
+        // Define the frame dimensions and the initial frame
+        
+
+
+    function drawPlayer() {
+        // Calculate the x position of the current frame in the idle row
+        var frameX = currentFrame * frameWidth;
+        // bounding box for debugging
+        // ctx.fillStyle = player.color;
+        // ctx.fillRect(player.x, player.y, player.width, player.height);
+        var frameX = currentFrame * frameWidth;
+        ctx.save();
+        // Flip the sprite horizontally if moving left
+        if (player.direction === 'left') {
+            ctx.scale(-1, 1); // Flip the context horizontally
+            ctx.drawImage(playerImage, frameX, frameY * frameHeight, frameWidth, frameHeight, -player.x - player.width / 3 - 90, player.y - player.height / 3 - 50, player.width * 3, player.height * 3);
+        } else {
+            ctx.drawImage(playerImage, frameX, frameY * frameHeight, frameWidth, frameHeight, player.x - player.width / 3 - 30, player.y - player.height / 3 - 50, player.width * 3, player.height * 3);
+        }
+        
+        ctx.restore();
+    }
+        // Update currentFrame to animate your character
+    function updateFrame() {
+        currentFrame++;
+        // Assuming you have a specific number of frames for the idle animation
+        if (currentFrame >= 9) {
+            currentFrame = 0;
+        }
+    }
+
+        function drawPlatforms() {
+            ctx.fillStyle = '#0c0';
+            for (var i = 0; i < platforms.length; i++) {
+                ctx.fillRect(platforms[i].x, platforms[i].y, platforms[i].width, platforms[i].height);
+            }
+        }
+
+        function updatePlayer() {
+            var prevY = player.y;  // Store the player's previous y position
+            
+            if (player.direction === 'right'){
+                 player.x += player.speed;
+                 frameY = 1;
+            }
+            else if (player.direction === 'left') {
+                player.x -= player.speed;
+                frameY = 1;
+            } 
+            else {
+                frameY = 0; // Idle animation
+            }
+            
+            // Apply gravity
+            player.vy += player.gravity;
+            player.y += player.vy;
+
+            // Stop the player when they hit the bottom of the canvas
+            if (player.y + player.height > canvas.height) {
+                player.y = canvas.height - player.height;
+                player.vy = 0;
+                player.jumpCount = 0;  // Reset the jump count
+            }
+
+            // Stop the player when they hit a platform
+            for (var i = 0; i < platforms.length; i++) {
+                if (player.x < platforms[i].x + platforms[i].width &&
+                    player.x + player.width > platforms[i].x &&
+                    player.y < platforms[i].y + platforms[i].height &&
+                    player.y + player.height > platforms[i].y) {
+                    // If the player is moving upwards, stop their upward movement
+                    if (player.vy < 0) {
+                        player.vy = 0;
+                    } else if (prevY + player.height <= platforms[i].y) {
+                        // If the player was above the platform in the previous frame, allow them to land on the platform
+                        player.y = platforms[i].y - player.height;
+                        player.vy = 0;
+                        player.jumpCount = 0;  // Reset the jump count
+                    }
+                }
+            }
+        }
+
+    
+        function drawGround() {
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(-999, canvas.height , Number.MAX_VALUE, 1000);
+      
+        }
+
+function gameLoop() {
+
+    
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+     
+    // Translate the canvas context
+    ctx.save();
+    
+    ctx.translate(canvas.width/2 - player.x, canvas.height/2 - player.y);
+    
+    drawPlayer();
+    drawPlatforms();
+    drawGround(); 
+    ctx.restore();
+    updateFrame()
+    updatePlayer();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+
+        // Add keyboard event listeners
+        window.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowRight') player.direction = 'right';
+            if (e.key === 'ArrowLeft') player.direction = 'left';
+            if (e.key === 'ArrowUp' && player.jumpCount < player.maxJumps) {
+                player.vy = -10;  // Jump when Up arrow key is pressed
+                player.jumpCount++;  // Increase the jump count
+            }
+        });
+
+        window.addEventListener('keyup', function(e) {
+            if (e.key === 'ArrowRight' && player.direction === 'right' ||
+                e.key === 'ArrowLeft' && player.direction === 'left') {
+                player.direction = null;
+            }
+        });
+    </script>
+</body>
+</html>
