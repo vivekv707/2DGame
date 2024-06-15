@@ -32,7 +32,10 @@
             vy: 0,  // Vertical speed
             gravity: 0.5,  // Gravity
             jumpCount: 0,  // Number of jumps
-            maxJumps: 2  // Maximum number of jumps
+            maxJumps: 2 , // Maximum number of jumps
+             // Define boundaries
+            leftBoundary: -900,
+            rightBoundary: 900  // Adjust as needed
         };
 
         var platforms = [
@@ -121,6 +124,13 @@
                     }
                 }
             }
+            // Boundaries to prevent player from going out of bounds
+            if (player.x < player.leftBoundary) {
+                player.x = player.leftBoundary;
+            } else if (player.x + player.width > player.rightBoundary) {
+                player.x = player.rightBoundary - player.width;
+            }
+         
         }
 
     
@@ -129,6 +139,14 @@
             ctx.fillRect(-999, canvas.height , Number.MAX_VALUE, 1000);
       
         }
+        function drawBoundary() {
+    // Draw left boundary
+    ctx.fillStyle = '#000'; // Color for the boundary
+    ctx.fillRect(player.leftBoundary, 0, player.leftBoundary, canvas.height);
+
+    // Draw right boundary
+    ctx.fillRect(player.rightBoundary, 0, player.rightBoundary, canvas.height);
+}
 
 function gameLoop() {
 
@@ -142,6 +160,7 @@ function gameLoop() {
     
     drawPlayer();
     drawPlatforms();
+    drawBoundary();
     drawGround(); 
     ctx.restore();
     updateFrame()
